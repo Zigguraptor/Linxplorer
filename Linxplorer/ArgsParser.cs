@@ -55,9 +55,9 @@ public class ArgsParser
         var options = new List<Option>();
 
         var i = 0;
-        for (; i < Args.Length; i++) //TODO bug: "--OPTION" registered as file
+        for (; i < Args.Length; i++)
         {
-            if (args[i].Contains('-'))
+            if (args[i].StartsWith('-'))
             {
                 AddOption(args[i]);
             }
