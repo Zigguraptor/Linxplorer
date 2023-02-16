@@ -121,14 +121,14 @@ public class ArgsParser
             {
                 if (ignoreCase)
                 {
-                    if (arg.Contains(commandKey, StringComparison.Ordinal))
+                    if (arg.Contains(commandKey, StringComparison.OrdinalIgnoreCase))
                     {
                         options.Add(new Option(option));
                     }
                 }
                 else
                 {
-                    if (arg.Contains(commandKey, StringComparison.OrdinalIgnoreCase))
+                    if (arg.Contains(commandKey, StringComparison.Ordinal))
                     {
                         options.Add(new Option(option));
                     }
