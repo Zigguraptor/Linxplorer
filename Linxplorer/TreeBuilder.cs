@@ -38,7 +38,9 @@ public static class TreeBuilder
         {
             var domain = uri.Host;
             if (domain == "") domain = "NO DOMAIN";
-            var path = uri.AbsolutePath.Split("/", StringSplitOptions.RemoveEmptyEntries); // TODO сделать нормально
+            var temp = uri.AbsolutePath.Split("/");
+            var path = temp[^1] == "" ? new string[temp.Length - 2] : new string[temp.Length - 1];
+            Array.Copy(temp, 1, path, 0, path.Length);
 
             FillDomain();
 
