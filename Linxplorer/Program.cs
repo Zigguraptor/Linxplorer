@@ -27,8 +27,10 @@ if (argsParser.ContainOption(GeneralOption.Version))
 if (argsParser.FileNames.Length < 1)
     return;
 
-var analysisResult =
-    LinksParser.AnalyzeFiles(argsParser.FileNames, argsParser.ContainOption(GeneralOption.OnlyLinksOnFile));
+var analysisResult = argsParser.ContainOption(GeneralOption.EndOfLink, out var opts) // if true, opts cannot be null.
+    ? LinksParser.ExtractLinksByEnd(argsParser.FileNames, opts.Split(' '))
+    : LinksParser.AnalyzeFiles(argsParser.FileNames, argsParser.ContainOption(GeneralOption.OnlyLinksOnFile));
+
 
 if (analysisResult.ParsedFiles.Length < 1)
 {

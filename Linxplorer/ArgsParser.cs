@@ -44,7 +44,8 @@ public class ArgsParser
     private static readonly Dictionary<string, GeneralOption> GeneralOptionsParams =
         new Dictionary<string, GeneralOption>
         {
-            { "--Files=", GeneralOption.OnlyLinksOnFile },
+            { "--files=", GeneralOption.OnlyLinksOnFile },
+            { "--ends-with=", GeneralOption.EndOfLink },
         };
 
     public ArgsParser(string[] args)
@@ -84,7 +85,10 @@ public class ArgsParser
                     if (!arg.StartsWith(option.Key)) continue;
 
                     if (arg.Length > option.Key.Length)
-                        options.Add(new Option(option.Value, arg[(option.Key.Length - 1)..]));
+                    {
+                        options.Add(new Option(option.Value, arg[option.Key.Length..]));
+                        return;
+                    }
                 }
 
                 foreach (var option in GeneralOptions)

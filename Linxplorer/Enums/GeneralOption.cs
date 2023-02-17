@@ -10,8 +10,8 @@ public enum GeneralOption
     Sort,
     SortByCount,
     Merge,
-    //По концу файла. ewqqweewq=(.file .png ...) 
-    
+    EndOfLink,
+
     Help,
     Version
 }
