@@ -15,6 +15,7 @@ public class TreeExplorer
 
     private NodeTree Root { get; }
     private Stack<NodeTree> BackStack { get; }
+    private List<NodeTree> MarkedNods = new();
 
     public void Explore(bool exploreAll = false, bool headersOff = false, bool countOff = false)
     {
@@ -55,10 +56,10 @@ public class TreeExplorer
             BackStack.Peek().PrintOneLayer(countOff);
         }
 
-        var selectedElementNumber = 1;
         if (BackStack.Peek().Children.Count > 0)
         {
-            BackStack.Peek().Children.First().Content.SwitchColor(countOff);
+            BackStack.Push(BackStack.Peek().Children.First());
+            BackStack.Peek().Content.SwitchColor(countOff);
         }
         else
         {
@@ -66,7 +67,9 @@ public class TreeExplorer
             return;
         }
 
-        // Console.CursorVisible = false;
+        var selectedElementNumber = 1;
+
+        // Console.CursorVisible = false; // TODO
         var read = true;
 
         while (read)
@@ -97,7 +100,7 @@ public class TreeExplorer
 
         void PrintBranchLinks()
         {
-            var printRoot = BackStack.Peek().Children[selectedElementNumber - 1];
+            var printRoot = BackStack.Peek();
 
             if (!_headersOff)
             {
@@ -127,92 +130,98 @@ public class TreeExplorer
 
         void SelectNext()
         {
-            if (selectedElementNumber + 1 > BackStack.Peek().Children.Count)
+            BackStack.Peek().Content.SwitchColor(countOff);
+            selectedElementNumber++;
+            BackStack.Pop();
+
+            if (selectedElementNumber > BackStack.Peek().Children.Count)
             {
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
                 selectedElementNumber = 1;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
+                BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
             }
             else
             {
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
-                selectedElementNumber++;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
+                BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
             }
+
+            BackStack.Peek().Content.SwitchColor(countOff);
         }
 
         void SelectPrev()
         {
-            if (selectedElementNumber == 1)
+            BackStack.Peek().Content.SwitchColor(countOff);
+            BackStack.Pop();
+            if (selectedElementNumber < 2)
             {
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
                 selectedElementNumber = BackStack.Peek().Children.Count;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
             }
             else
             {
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
                 selectedElementNumber--;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
+                BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
             }
+
+            BackStack.Peek().Content.SwitchColor(countOff);
         }
 
         bool NextElement()
         {
-            if (BackStack.Peek().Children[selectedElementNumber - 1].Children.Count <= 0) return false;
+            if (BackStack.Peek().Children.Count <= 0) return false;
+
+            BackStack.Peek().Content.SwitchColor(countOff);
 
             if (_exploreAll)
             {
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
-                BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
                 selectedElementNumber = 1;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
+                BackStack.Push(BackStack.Peek().Children.First());
             }
             else
             {
                 var treeEnd = Console.CursorTop;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
 
                 Console.SetCursorPosition(0, treeStartPos);
-                BackStack.Peek().Children[selectedElementNumber - 1].PrintOneLayer(countOff);
+                BackStack.Peek().PrintOneLayer(countOff);
                 ClearLines(treeEnd);
 
-                BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
                 selectedElementNumber = 1;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
+                BackStack.Push(BackStack.Peek().Children.First());
             }
+
+            BackStack.Peek().Content.SwitchColor(countOff);
 
             return true;
         }
 
         bool BackElement()
         {
-            if (BackStack.Count <= 1) return false;
+            if (BackStack.Count <= 2) return false;
+
+            BackStack.Peek().Content.SwitchColor(countOff);
 
             if (_exploreAll)
             {
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
-                var temp = BackStack.Peek();
                 BackStack.Pop();
+                var temp = BackStack.Pop();
                 selectedElementNumber = BackStack.Peek().Children.IndexOf(temp) + 1;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
+                BackStack.Push(temp);
             }
             else
             {
                 var treeEnd = Console.CursorTop;
 
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
-
-                var temp = BackStack.Peek();
                 BackStack.Pop();
+                var temp = BackStack.Pop();
+                selectedElementNumber = BackStack.Peek().Children.IndexOf(temp) + 1;
+
 
                 Console.SetCursorPosition(0, treeStartPos);
                 BackStack.Peek().PrintOneLayer(countOff);
                 ClearLines(treeEnd);
 
-                selectedElementNumber = BackStack.Peek().Children.IndexOf(temp) + 1;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
+                BackStack.Push(temp);
             }
+
+            BackStack.Peek().Content.SwitchColor(countOff);
 
             return true;
         }
