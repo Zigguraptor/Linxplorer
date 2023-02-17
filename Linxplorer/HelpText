@@ -24,6 +24,10 @@ Options:
 
 -c,   --count-off     Do not print count in tree.
 
-
+      --ends-with=    Print links with specified endings
+                      In double quotes separated by a space
+                      If this is used, then "-f/--files" is ignored.
+ 
+      
       --help       Display help and exit
       --version    Output version information and exit
