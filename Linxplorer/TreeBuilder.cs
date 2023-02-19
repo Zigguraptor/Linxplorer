@@ -74,6 +74,8 @@ public static class TreeBuilder
 
                         node.Content.Count++;
                         currentNode = node;
+                        if (i == path.Length - 1)
+                            node.Content.Uris.Add(uri);
                         return;
                     }
 

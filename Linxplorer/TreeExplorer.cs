@@ -15,12 +15,21 @@ public class TreeExplorer
 
     private NodeTree Root { get; }
     private Stack<NodeTree> BackStack { get; }
+    private readonly List<NodeTree> _markedNods = new();
 
     public void Explore(bool exploreAll = false, bool headersOff = false, bool countOff = false)
     {
         if (!headersOff)
         {
             Console.Write('\n');
+            PrintHintButton("[Esc] - Exit");
+            Console.Write("   ");
+            PrintHintButton("[Enter] - Print branch");
+            Console.Write("   ");
+            PrintHintButton("[x] - mark element");
+            // Console.Write("   ");
+            // PrintHintButton("[a] - mark all"); //TODO
+            Console.Write("\n\n");
             PrintHintButton("[↑] - Up");
             Console.Write("   ");
             PrintHintButton("[↓] - Down");
@@ -28,24 +37,27 @@ public class TreeExplorer
             PrintHintButton("[→] - Next element");
             Console.Write("   ");
             PrintHintButton("[←] - Previous element");
-            Console.Write("   ");
-            PrintHintButton("[Enter] - Print branch");
-            Console.Write("   ");
-            PrintHintButton("[Esc] - Exit");
             Console.Write("\n\n");
         }
-
 
         _exploreAll = exploreAll;
         _headersOff = headersOff;
         SelectorEnable(countOff);
     }
 
+    private static void PrintHintButton(string hint)
+    {
+        Console.BackgroundColor = ConsoleColor.White;
+        Console.ForegroundColor = ConsoleColor.Black;
+        Console.Write(hint);
+        Console.ResetColor();
+    }
+
     private void SelectorEnable(bool countOff = false)
     {
         var treeStartPos = Console.CursorTop;
-        Coincidence.CurrentWindowPos = treeStartPos - Coincidence.Padding;
-        
+        Coincidence.CurrentWindowPos = treeStartPos - 8;
+
         if (_exploreAll)
         {
             BackStack.Peek().PrintNodeTree(countOff);
@@ -55,10 +67,10 @@ public class TreeExplorer
             BackStack.Peek().PrintOneLayer(countOff);
         }
 
-        var selectedElementNumber = 1;
         if (BackStack.Peek().Children.Count > 0)
         {
-            BackStack.Peek().Children.First().Content.SwitchColor(countOff);
+            BackStack.Push(BackStack.Peek().Children.First());
+            BackStack.Peek().Content.SwitchColor();
         }
         else
         {
@@ -66,7 +78,9 @@ public class TreeExplorer
             return;
         }
 
-        // Console.CursorVisible = false;
+        var selectedElementNumber = 1;
+
+        // Console.CursorVisible = false; // TODO
         var read = true;
 
         while (read)
@@ -89,132 +103,126 @@ public class TreeExplorer
                     BackElement();
                     break;
                 case ConsoleKey.Enter:
-                    PrintBranchLinks();
+                    SelectActionWithBranches();
                     read = false;
                     break;
-            }
-        }
-
-        void PrintBranchLinks()
-        {
-            var printRoot = BackStack.Peek().Children[selectedElementNumber - 1];
-
-            if (!_headersOff)
-            {
-                Console.WriteLine('\n' + new string('_', Console.BufferWidth));
-
-                foreach (var node in BackStack.Reverse())
-                    Console.Write(node.Content.Name + '/');
-
-                printRoot.Content.Print();
-                Console.Write("\n\n");
-            }
-
-            Print(printRoot);
-
-            void Print(NodeTree node)
-            {
-                if (node.Content.Uri != null)
-                    Console.WriteLine(node.Content.Uri.ToString());
-
-                if (node.Children.Count > 0)
-                {
-                    foreach (var child in node.Children)
-                        Print(child);
-                }
+                case ConsoleKey.X:
+                    MarkElement();
+                    break;
             }
         }
 
         void SelectNext()
         {
-            if (selectedElementNumber + 1 > BackStack.Peek().Children.Count)
-            {
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
+            BackStack.Peek().Content.SwitchColor();
+            BackStack.Pop();
+
+            selectedElementNumber++;
+            if (selectedElementNumber > BackStack.Peek().Children.Count)
                 selectedElementNumber = 1;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
-            }
-            else
-            {
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
-                selectedElementNumber++;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
-            }
+
+            BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
+
+            BackStack.Peek().Content.SwitchColor();
         }
 
         void SelectPrev()
         {
-            if (selectedElementNumber == 1)
+            BackStack.Peek().Content.SwitchColor();
+            BackStack.Pop();
+            if (selectedElementNumber < 2)
             {
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
                 selectedElementNumber = BackStack.Peek().Children.Count;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
             }
             else
             {
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
                 selectedElementNumber--;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
             }
+
+            BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
+
+            BackStack.Peek().Content.SwitchColor();
         }
 
         bool NextElement()
         {
-            if (BackStack.Peek().Children[selectedElementNumber - 1].Children.Count <= 0) return false;
+            if (BackStack.Peek().Children.Count <= 0) return false;
+
+            BackStack.Peek().Content.SwitchColor();
 
             if (_exploreAll)
             {
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
-                BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
                 selectedElementNumber = 1;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
+                BackStack.Push(BackStack.Peek().Children.First());
             }
             else
             {
                 var treeEnd = Console.CursorTop;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
 
                 Console.SetCursorPosition(0, treeStartPos);
-                BackStack.Peek().Children[selectedElementNumber - 1].PrintOneLayer(countOff);
+                BackStack.Peek().PrintOneLayer(countOff);
                 ClearLines(treeEnd);
 
-                BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
                 selectedElementNumber = 1;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
+                BackStack.Push(BackStack.Peek().Children.First());
             }
+
+            BackStack.Peek().Content.SwitchColor();
 
             return true;
         }
 
         bool BackElement()
         {
-            if (BackStack.Count <= 1) return false;
+            if (BackStack.Count <= 2) return false;
+
+            BackStack.Peek().Content.SwitchColor();
 
             if (_exploreAll)
             {
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
-                var temp = BackStack.Peek();
                 BackStack.Pop();
+                var temp = BackStack.Pop();
                 selectedElementNumber = BackStack.Peek().Children.IndexOf(temp) + 1;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
+                BackStack.Push(temp);
             }
             else
             {
                 var treeEnd = Console.CursorTop;
 
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
-
-                var temp = BackStack.Peek();
                 BackStack.Pop();
+                var temp = BackStack.Pop();
+                selectedElementNumber = BackStack.Peek().Children.IndexOf(temp) + 1;
+
 
                 Console.SetCursorPosition(0, treeStartPos);
                 BackStack.Peek().PrintOneLayer(countOff);
                 ClearLines(treeEnd);
 
-                selectedElementNumber = BackStack.Peek().Children.IndexOf(temp) + 1;
-                BackStack.Peek().Children[selectedElementNumber - 1].Content.SwitchColor(countOff);
+                BackStack.Push(temp);
             }
 
+            BackStack.Peek().Content.SwitchColor();
+
             return true;
+        }
+
+        void MarkElement()
+        {
+            if (BackStack.Peek().Content.IsMarked)
+            {
+                BackStack.Peek().Content.IsMarked = false;
+                _markedNods.Remove(BackStack.Last());
+            }
+            else
+            {
+                BackStack.Peek().Content.IsMarked = true;
+                _markedNods.Add(BackStack.Peek());
+            }
+
+
+            var pos = Console.GetCursorPosition();
+            BackStack.Peek().Content.PrintNameCount();
+            Console.SetCursorPosition(pos.Left, pos.Top);
         }
 
         void ClearLines(int end)
@@ -227,11 +235,107 @@ public class TreeExplorer
         }
     }
 
-    private void PrintHintButton(string hint)
+    private void SelectActionWithBranches()
     {
-        Console.BackgroundColor = ConsoleColor.White;
-        Console.ForegroundColor = ConsoleColor.Black;
-        Console.Write(hint);
-        Console.ResetColor();
+        if (!_headersOff)
+        {
+            PrintHint();
+        }
+
+        void PrintHint()
+        {
+            Console.WriteLine(new string('_', Console.BufferWidth));
+            Console.WriteLine("Select action with selected branches.\n");
+            PrintHintButton("[Enter] - Just output to console(Don't exit)");
+            Console.Write("   ");
+            PrintHintButton("[A] - Append to file");
+            Console.Write("\n\n");
+            PrintHintButton("[S] - Save in txt file(rewrite)");
+            Console.Write("   ");
+            PrintHintButton("[Esc] - Exit");
+            // Console.Write("   ");
+            // PrintHintButton("[Backspace] - Back");  //TODO
+            Console.Write("\n\n");
+        }
+
+        while (true)
+        {
+            var k = Console.ReadKey(true);
+
+            if (k.Key == ConsoleKey.Escape) return;
+
+            string? line;
+            int count;
+            switch (k.Key)
+            {
+                case ConsoleKey.Enter:
+                    var result = GetUrisFromMarked(out count);
+                    Console.WriteLine("Result " + count + " links:");
+                    Console.WriteLine(result);
+                    PrintHint();
+                    break;
+                case ConsoleKey.S:
+                    Console.Write("Path:");
+                    line = Console.ReadLine();
+                    try
+                    {
+                        File.WriteAllText(line, GetUrisFromMarked(out count));
+                        Console.WriteLine("Success. " + count + " links written.");
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine(e);
+                    }
+
+                    PrintHint();
+                    break;
+                case ConsoleKey.A:
+                    Console.Write("Path:");
+                    line = Console.ReadLine();
+                    try
+                    {
+                        File.AppendAllText(line, '\n' + GetUrisFromMarked(out count));
+                        Console.WriteLine("Success. " + count + " links written.");
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine(e);
+                    }
+
+                    PrintHint();
+                    break;
+            }
+        }
+
+        string GetUrisFromMarked(out int count)
+        {
+            List<NodeTree> result = new(Root.Content.Count);
+            foreach (var node in _markedNods)
+            {
+                result.Add(node);
+                AddChild(node);
+            }
+
+            void AddChild(NodeTree node)
+            {
+                foreach (var child in node.Children)
+                {
+                    if (!result.Contains(child))
+                        result.Add(child);
+
+                    AddChild(child);
+                }
+            }
+
+            List<string> uris = new();
+
+            foreach (var node in result)
+                uris.AddRange(node.Content.Uris.Select(uri => uri.ToString()));
+
+            count = uris.Count;
+            return string.Join('\n', uris);
+        }
     }
 }

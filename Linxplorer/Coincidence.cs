@@ -10,17 +10,18 @@ public class Coincidence : IPrintable
         set => _currentWindowPos = value < 0 ? 0 : value;
     }
 
+    public readonly List<Uri> Uris = new();
     public string Name { get; set; }
     public int Count { get; set; }
+    public bool IsMarked;
 
-    public readonly Uri Uri = null!;
-
-
+    private static int _currentWindowPos;
     private readonly bool _isRoot;
     private bool _isPrinted;
     private bool _isSelected;
+    private bool _countOff;
     private (int x, int y) _pos;
-    private static int _currentWindowPos;
+
 
     public Coincidence(string name, bool isRoot)
     {
@@ -38,7 +39,7 @@ public class Coincidence : IPrintable
     {
         Name = name;
         Count = count;
-        Uri = uri;
+        Uris.Add(uri);
     }
 
     public override string ToString()
@@ -49,63 +50,37 @@ public class Coincidence : IPrintable
     public void Print(bool countOff = false)
     {
         _pos = Console.GetCursorPosition();
+        _countOff = countOff;
 
-        PrintNameCount(countOff);
+        PrintNameCount();
 
         _isPrinted = true;
     }
 
-    private void PrintNameCount(bool countOff = false)
+    public void PrintNameCount()
     {
+        var current = Console.GetCursorPosition();
+        Console.SetCursorPosition(_pos.x, _pos.y);
+
         if (_isRoot)
         {
             Console.Write(Name);
         }
         else
         {
-            Console.Write(Name);
-            if (Uri != null)
+            if (IsMarked)
             {
-                Console.BackgroundColor = ConsoleColor.Cyan;
+                Console.BackgroundColor = ConsoleColor.Red;
                 Console.ForegroundColor = ConsoleColor.Black;
-                Console.Write("~");
+                Console.Write("X");
+                Console.ResetColor();
             }
 
-            if (Uri == null || Count > 1)
-            {
-                if (!countOff)
-                {
-                    Console.BackgroundColor = ConsoleColor.Black;
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.Write(" Links count:" + Count);
-                }
-            }
-
-            Console.ResetColor();
-            Console.Write(new string(' ', Console.WindowWidth - Console.CursorLeft - 1));
-        }
-    }
-
-    public void SwitchColor(bool countOff)
-    {
-        if (_isPrinted)
-        {
-            var current = Console.GetCursorPosition();
             if (_isSelected)
             {
-                Console.SetCursorPosition(_pos.x, _pos.y);
-                PrintNameCount(countOff);
-                Console.SetCursorPosition(current.Left, current.Top);
-                _isSelected = false;
-            }
-            else
-            {
-                Console.SetCursorPosition(_pos.x, _pos.y);
                 Console.BackgroundColor = ConsoleColor.White;
                 Console.ForegroundColor = ConsoleColor.Black;
-                Console.Write(">");
-                PrintNameCount(countOff);
-                Console.SetCursorPosition(current.Left, current.Top);
+                Console.Write(">" + Name);
 
                 if (CurrentWindowPos > _pos.y - Padding)
                 {
@@ -115,11 +90,43 @@ public class Coincidence : IPrintable
                 {
                     CurrentWindowPos = _pos.y + Padding - Console.WindowHeight;
                 }
-
-                _isSelected = true;
+            }
+            else
+            {
+                Console.Write(Name);
             }
 
+            if (Uris.Count > 0)
+            {
+                Console.BackgroundColor = ConsoleColor.Cyan;
+                Console.ForegroundColor = ConsoleColor.Black;
+                Console.Write("~");
+            }
+
+            if (Uris.Count == 0 || Count > 1)
+            {
+                if (!_countOff)
+                {
+                    Console.BackgroundColor = ConsoleColor.Black;
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Write(" Links count:" + Count);
+                }
+            }
+
+            Console.ResetColor();
+            Console.Write(new string(' ', Console.BufferWidth - Console.CursorLeft - 1));
+
+            Console.SetCursorPosition(current.Left, current.Top);
             Console.WindowTop = CurrentWindowPos;
+        }
+    }
+
+    public void SwitchColor()
+    {
+        if (_isPrinted)
+        {
+            _isSelected = !_isSelected;
+            PrintNameCount();
         }
         else
         {
