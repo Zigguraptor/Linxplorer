@@ -15,7 +15,7 @@ public class TreeExplorer
 
     private NodeTree Root { get; }
     private Stack<NodeTree> BackStack { get; }
-    private List<NodeTree> MarkedNods = new();
+    private readonly List<NodeTree> _markedNods = new();
 
     public void Explore(bool exploreAll = false, bool headersOff = false, bool countOff = false)
     {
@@ -27,8 +27,8 @@ public class TreeExplorer
             PrintHintButton("[Enter] - Print branch");
             Console.Write("   ");
             PrintHintButton("[x] - mark element");
-            Console.Write("   ");
-            PrintHintButton("[a] - mark all");
+            // Console.Write("   ");
+            // PrintHintButton("[a] - mark all"); //TODO
             Console.Write("\n\n");
             PrintHintButton("[↑] - Up");
             Console.Write("   ");
@@ -56,7 +56,7 @@ public class TreeExplorer
     private void SelectorEnable(bool countOff = false)
     {
         var treeStartPos = Console.CursorTop;
-        Coincidence.CurrentWindowPos = treeStartPos - Coincidence.Padding;
+        Coincidence.CurrentWindowPos = treeStartPos - 8;
 
         if (_exploreAll)
         {
@@ -211,12 +211,12 @@ public class TreeExplorer
             if (BackStack.Peek().Content.IsMarked)
             {
                 BackStack.Peek().Content.IsMarked = false;
-                MarkedNods.Remove(BackStack.Last());
+                _markedNods.Remove(BackStack.Last());
             }
             else
             {
                 BackStack.Peek().Content.IsMarked = true;
-                MarkedNods.Add(BackStack.Peek());
+                _markedNods.Add(BackStack.Peek());
             }
 
 
@@ -239,33 +239,78 @@ public class TreeExplorer
     {
         if (!_headersOff)
         {
-            Console.WriteLine('\n' + new string('_', Console.BufferWidth));
-            Console.WriteLine("Select action with selected branches");
+            PrintHint();
+        }
 
-            PrintHintButton("[Enter] - Just output to console");
+        void PrintHint()
+        {
+            Console.WriteLine(new string('_', Console.BufferWidth));
+            Console.WriteLine("Select action with selected branches.\n");
+            PrintHintButton("[Enter] - Just output to console(Don't exit)");
             Console.Write("   ");
-            PrintHintButton("[S] - Save in txt file");
-            Console.Write('\n');
             PrintHintButton("[A] - Append to file");
+            Console.Write("\n\n");
+            PrintHintButton("[S] - Save in txt file(rewrite)");
+            Console.Write("   ");
+            PrintHintButton("[Esc] - Exit");
+            // Console.Write("   ");
+            // PrintHintButton("[Backspace] - Back");  //TODO
             Console.Write("\n\n");
         }
 
-        var k = Console.ReadKey(true);
-        if (k.Key == ConsoleKey.Escape) return;
-
-        switch (k.Key)
+        while (true)
         {
-            case ConsoleKey.Enter:
-                var uris = GetUrisFromMarked();
-                foreach (var s in uris)
-                    Console.WriteLine(s);
-                break;
+            var k = Console.ReadKey(true);
+
+            if (k.Key == ConsoleKey.Escape) return;
+            
+            string? line;
+            switch (k.Key)
+            {
+                case ConsoleKey.Enter:
+                    Console.WriteLine("Result:");
+                    Console.WriteLine(GetUrisFromMarked());
+                    PrintHint();
+                    break;
+                case ConsoleKey.S:
+                    Console.Write("Path:");
+                    line = Console.ReadLine();
+                    try
+                    {
+                        File.WriteAllText(line, GetUrisFromMarked());
+                        Console.WriteLine("Success");
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine(e);
+                    }
+
+                    PrintHint();
+                    break;
+                case ConsoleKey.A:
+                    Console.Write("Path:");
+                    line = Console.ReadLine();
+                    try
+                    {
+                        File.AppendAllText(line, '\n' + GetUrisFromMarked());
+                        Console.WriteLine("Success");
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine(e);
+                    }
+
+                    PrintHint();
+                    break;
+            }
         }
 
-        string[] GetUrisFromMarked()
+        string GetUrisFromMarked()
         {
             List<NodeTree> result = new(Root.Content.Count);
-            foreach (var node in MarkedNods)
+            foreach (var node in _markedNods)
             {
                 result.Add(node);
                 AddChild(node);
@@ -287,7 +332,7 @@ public class TreeExplorer
             foreach (var node in result)
                 uris.AddRange(node.Content.Uris.Select(uri => uri.ToString()));
 
-            return uris.ToArray();
+            return string.Join('\n', uris);
         }
     }
 }
