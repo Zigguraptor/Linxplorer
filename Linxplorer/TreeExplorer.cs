@@ -22,6 +22,14 @@ public class TreeExplorer
         if (!headersOff)
         {
             Console.Write('\n');
+            PrintHintButton("[Esc] - Exit");
+            Console.Write("   ");
+            PrintHintButton("[Enter] - Print branch");
+            Console.Write("   ");
+            PrintHintButton("[x] - mark element");
+            Console.Write("   ");
+            PrintHintButton("[a] - mark all");
+            Console.Write("\n\n");
             PrintHintButton("[↑] - Up");
             Console.Write("   ");
             PrintHintButton("[↓] - Down");
@@ -29,13 +37,16 @@ public class TreeExplorer
             PrintHintButton("[→] - Next element");
             Console.Write("   ");
             PrintHintButton("[←] - Previous element");
-            Console.Write("   ");
-            PrintHintButton("[Enter] - Print branch");
-            Console.Write("   ");
-            PrintHintButton("[Esc] - Exit");
             Console.Write("\n\n");
         }
 
+        void PrintHintButton(string hint)
+        {
+            Console.BackgroundColor = ConsoleColor.White;
+            Console.ForegroundColor = ConsoleColor.Black;
+            Console.Write(hint);
+            Console.ResetColor();
+        }
 
         _exploreAll = exploreAll;
         _headersOff = headersOff;
@@ -46,7 +57,7 @@ public class TreeExplorer
     {
         var treeStartPos = Console.CursorTop;
         Coincidence.CurrentWindowPos = treeStartPos - Coincidence.Padding;
-        
+
         if (_exploreAll)
         {
             BackStack.Peek().PrintNodeTree(countOff);
@@ -59,7 +70,7 @@ public class TreeExplorer
         if (BackStack.Peek().Children.Count > 0)
         {
             BackStack.Push(BackStack.Peek().Children.First());
-            BackStack.Peek().Content.SwitchColor(countOff);
+            BackStack.Peek().Content.SwitchColor();
         }
         else
         {
@@ -95,12 +106,15 @@ public class TreeExplorer
                     PrintBranchLinks();
                     read = false;
                     break;
+                case ConsoleKey.X:
+                    MarkElement();
+                    break;
             }
         }
 
         void PrintBranchLinks()
         {
-            var printRoot = BackStack.Peek();
+            var branch = BackStack.Peek();
 
             if (!_headersOff)
             {
@@ -109,16 +123,19 @@ public class TreeExplorer
                 foreach (var node in BackStack.Reverse())
                     Console.Write(node.Content.Name + '/');
 
-                printRoot.Content.Print();
+                branch.Content.Print();
                 Console.Write("\n\n");
             }
 
-            Print(printRoot);
+            Print(branch);
 
             void Print(NodeTree node)
             {
-                if (node.Content.Uri != null)
-                    Console.WriteLine(node.Content.Uri.ToString());
+                if (node.Content.Uris.Count > 0)
+                {
+                    foreach (var uri in node.Content.Uris)
+                        Console.WriteLine(uri.ToString());
+                }
 
                 if (node.Children.Count > 0)
                 {
@@ -130,26 +147,21 @@ public class TreeExplorer
 
         void SelectNext()
         {
-            BackStack.Peek().Content.SwitchColor(countOff);
-            selectedElementNumber++;
+            BackStack.Peek().Content.SwitchColor();
             BackStack.Pop();
 
+            selectedElementNumber++;
             if (selectedElementNumber > BackStack.Peek().Children.Count)
-            {
                 selectedElementNumber = 1;
-                BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
-            }
-            else
-            {
-                BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
-            }
 
-            BackStack.Peek().Content.SwitchColor(countOff);
+            BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
+
+            BackStack.Peek().Content.SwitchColor();
         }
 
         void SelectPrev()
         {
-            BackStack.Peek().Content.SwitchColor(countOff);
+            BackStack.Peek().Content.SwitchColor();
             BackStack.Pop();
             if (selectedElementNumber < 2)
             {
@@ -158,17 +170,18 @@ public class TreeExplorer
             else
             {
                 selectedElementNumber--;
-                BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
             }
 
-            BackStack.Peek().Content.SwitchColor(countOff);
+            BackStack.Push(BackStack.Peek().Children[selectedElementNumber - 1]);
+
+            BackStack.Peek().Content.SwitchColor();
         }
 
         bool NextElement()
         {
             if (BackStack.Peek().Children.Count <= 0) return false;
 
-            BackStack.Peek().Content.SwitchColor(countOff);
+            BackStack.Peek().Content.SwitchColor();
 
             if (_exploreAll)
             {
@@ -187,7 +200,7 @@ public class TreeExplorer
                 BackStack.Push(BackStack.Peek().Children.First());
             }
 
-            BackStack.Peek().Content.SwitchColor(countOff);
+            BackStack.Peek().Content.SwitchColor();
 
             return true;
         }
@@ -196,7 +209,7 @@ public class TreeExplorer
         {
             if (BackStack.Count <= 2) return false;
 
-            BackStack.Peek().Content.SwitchColor(countOff);
+            BackStack.Peek().Content.SwitchColor();
 
             if (_exploreAll)
             {
@@ -221,11 +234,30 @@ public class TreeExplorer
                 BackStack.Push(temp);
             }
 
-            BackStack.Peek().Content.SwitchColor(countOff);
+            BackStack.Peek().Content.SwitchColor();
 
             return true;
         }
 
+        void MarkElement()
+        {
+            if (BackStack.Peek().Content.IsMarked)
+            {
+                BackStack.Peek().Content.IsMarked = false;
+                MarkedNods.Remove(BackStack.Last());
+            }
+            else
+            {
+                BackStack.Peek().Content.IsMarked = true;
+                MarkedNods.Add(BackStack.Peek());
+            }
+
+
+            var pos = Console.GetCursorPosition();
+            BackStack.Peek().Content.PrintNameCount();
+            Console.SetCursorPosition(pos.Left, pos.Top);
+        }
+        
         void ClearLines(int end)
         {
             var newTreeEnd = Console.CursorTop;
@@ -234,13 +266,5 @@ public class TreeExplorer
 
             Console.SetCursorPosition(0, newTreeEnd);
         }
-    }
-
-    private void PrintHintButton(string hint)
-    {
-        Console.BackgroundColor = ConsoleColor.White;
-        Console.ForegroundColor = ConsoleColor.Black;
-        Console.Write(hint);
-        Console.ResetColor();
     }
 }
