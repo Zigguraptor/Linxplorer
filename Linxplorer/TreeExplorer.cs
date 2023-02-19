@@ -263,13 +263,15 @@ public class TreeExplorer
             var k = Console.ReadKey(true);
 
             if (k.Key == ConsoleKey.Escape) return;
-            
+
             string? line;
+            int count;
             switch (k.Key)
             {
                 case ConsoleKey.Enter:
-                    Console.WriteLine("Result:");
-                    Console.WriteLine(GetUrisFromMarked());
+                    var result = GetUrisFromMarked(out count);
+                    Console.WriteLine("Result " + count + " links:");
+                    Console.WriteLine(result);
                     PrintHint();
                     break;
                 case ConsoleKey.S:
@@ -277,8 +279,8 @@ public class TreeExplorer
                     line = Console.ReadLine();
                     try
                     {
-                        File.WriteAllText(line, GetUrisFromMarked());
-                        Console.WriteLine("Success");
+                        File.WriteAllText(line, GetUrisFromMarked(out count));
+                        Console.WriteLine("Success. " + count + " links written.");
                     }
                     catch (Exception e)
                     {
@@ -293,8 +295,8 @@ public class TreeExplorer
                     line = Console.ReadLine();
                     try
                     {
-                        File.AppendAllText(line, '\n' + GetUrisFromMarked());
-                        Console.WriteLine("Success");
+                        File.AppendAllText(line, '\n' + GetUrisFromMarked(out count));
+                        Console.WriteLine("Success. " + count + " links written.");
                     }
                     catch (Exception e)
                     {
@@ -307,7 +309,7 @@ public class TreeExplorer
             }
         }
 
-        string GetUrisFromMarked()
+        string GetUrisFromMarked(out int count)
         {
             List<NodeTree> result = new(Root.Content.Count);
             foreach (var node in _markedNods)
@@ -332,6 +334,7 @@ public class TreeExplorer
             foreach (var node in result)
                 uris.AddRange(node.Content.Uris.Select(uri => uri.ToString()));
 
+            count = uris.Count;
             return string.Join('\n', uris);
         }
     }
