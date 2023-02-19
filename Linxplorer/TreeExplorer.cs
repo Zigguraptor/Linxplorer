@@ -40,17 +40,17 @@ public class TreeExplorer
             Console.Write("\n\n");
         }
 
-        void PrintHintButton(string hint)
-        {
-            Console.BackgroundColor = ConsoleColor.White;
-            Console.ForegroundColor = ConsoleColor.Black;
-            Console.Write(hint);
-            Console.ResetColor();
-        }
-
         _exploreAll = exploreAll;
         _headersOff = headersOff;
         SelectorEnable(countOff);
+    }
+
+    private static void PrintHintButton(string hint)
+    {
+        Console.BackgroundColor = ConsoleColor.White;
+        Console.ForegroundColor = ConsoleColor.Black;
+        Console.Write(hint);
+        Console.ResetColor();
     }
 
     private void SelectorEnable(bool countOff = false)
@@ -103,45 +103,12 @@ public class TreeExplorer
                     BackElement();
                     break;
                 case ConsoleKey.Enter:
-                    PrintBranchLinks();
+                    SelectActionWithBranches();
                     read = false;
                     break;
                 case ConsoleKey.X:
                     MarkElement();
                     break;
-            }
-        }
-
-        void PrintBranchLinks()
-        {
-            var branch = BackStack.Peek();
-
-            if (!_headersOff)
-            {
-                Console.WriteLine('\n' + new string('_', Console.BufferWidth));
-
-                foreach (var node in BackStack.Reverse())
-                    Console.Write(node.Content.Name + '/');
-
-                branch.Content.Print();
-                Console.Write("\n\n");
-            }
-
-            Print(branch);
-
-            void Print(NodeTree node)
-            {
-                if (node.Content.Uris.Count > 0)
-                {
-                    foreach (var uri in node.Content.Uris)
-                        Console.WriteLine(uri.ToString());
-                }
-
-                if (node.Children.Count > 0)
-                {
-                    foreach (var child in node.Children)
-                        Print(child);
-                }
             }
         }
 
@@ -257,7 +224,7 @@ public class TreeExplorer
             BackStack.Peek().Content.PrintNameCount();
             Console.SetCursorPosition(pos.Left, pos.Top);
         }
-        
+
         void ClearLines(int end)
         {
             var newTreeEnd = Console.CursorTop;
@@ -265,6 +232,62 @@ public class TreeExplorer
                 Console.WriteLine(new string(' ', Console.BufferWidth - 1));
 
             Console.SetCursorPosition(0, newTreeEnd);
+        }
+    }
+
+    private void SelectActionWithBranches()
+    {
+        if (!_headersOff)
+        {
+            Console.WriteLine('\n' + new string('_', Console.BufferWidth));
+            Console.WriteLine("Select action with selected branches");
+
+            PrintHintButton("[Enter] - Just output to console");
+            Console.Write("   ");
+            PrintHintButton("[S] - Save in txt file");
+            Console.Write('\n');
+            PrintHintButton("[A] - Append to file");
+            Console.Write("\n\n");
+        }
+
+        var k = Console.ReadKey(true);
+        if (k.Key == ConsoleKey.Escape) return;
+
+        switch (k.Key)
+        {
+            case ConsoleKey.Enter:
+                var uris = GetUrisFromMarked();
+                foreach (var s in uris)
+                    Console.WriteLine(s);
+                break;
+        }
+
+        string[] GetUrisFromMarked()
+        {
+            List<NodeTree> result = new(Root.Content.Count);
+            foreach (var node in MarkedNods)
+            {
+                result.Add(node);
+                AddChild(node);
+            }
+
+            void AddChild(NodeTree node)
+            {
+                foreach (var child in node.Children)
+                {
+                    if (!result.Contains(child))
+                        result.Add(child);
+
+                    AddChild(child);
+                }
+            }
+
+            List<string> uris = new();
+
+            foreach (var node in result)
+                uris.AddRange(node.Content.Uris.Select(uri => uri.ToString()));
+
+            return uris.ToArray();
         }
     }
 }
