@@ -79,7 +79,7 @@ public class ArgsParser
 
         void AddOption(string arg)
         {
-            if (arg[1] == '-')
+            if (arg.Length > 1 && arg[1] == '-')
             {
                 foreach (var option in GeneralOptionsParams)
                 {
