@@ -11,6 +11,7 @@ public enum GeneralOption
     SortByCount,
     Merge,
     EndOfLink,
+    Find,
 
     Help,
     Version

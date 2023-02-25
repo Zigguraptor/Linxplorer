@@ -3,7 +3,7 @@
 public class ParsedFile
 {
     public readonly string FileName;
-    public readonly Uri[] Links;
+    public Uri[] Links;
 
     public ParsedFile(string fileName, Uri[] links)
     {

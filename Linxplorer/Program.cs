@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text.RegularExpressions;
 using Linxplorer;
 using Linxplorer.Enums;
 
@@ -20,7 +21,7 @@ if (argsParser.ContainOption(GeneralOption.Help))
 
 if (argsParser.ContainOption(GeneralOption.Version))
 {
-    Console.WriteLine("\nVersion: 0.0.1 alpha for friends.");
+    Console.WriteLine("\nVersion: 1.0-pre");
     return;
 }
 
@@ -46,6 +47,26 @@ if (!argsParser.ContainOption(GeneralOption.WithoutHeaders))
 
 if (argsParser.ContainOption(GeneralOption.Merge))
     analysisResult.Merge();
+
+if (argsParser.ContainOption(GeneralOption.Find, out var param))
+{
+    if (param is { Length: > 0 })
+    {
+        foreach (var item in analysisResult.ParsedFiles)
+        {
+            var filteredLinks = new List<Uri>();
+            foreach (var link in item.Links)
+            {
+                if (Regex.IsMatch(link.ToString(), param))
+                {
+                    filteredLinks.Add(link);
+                }
+            }
+
+            item.Links = filteredLinks.ToArray();
+        }
+    }
+}
 
 if (argsParser.ContainOption(GeneralOption.Sort))
     analysisResult.Sort();

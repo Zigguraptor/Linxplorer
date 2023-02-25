@@ -27,6 +27,10 @@ Options:
       --ends-with=    Print links with specified endings
                       In double quotes separated by a space
                       If this is used, then "-f/--files" is ignored.
+                      
+      --find=         Looks for regex matches in each link and displays only
+                      those in which it was found.
+                      You can use "^" and "&" for full match.
  
       
       --help       Display help and exit

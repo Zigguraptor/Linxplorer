@@ -5,8 +5,9 @@ namespace Linxplorer;
 public class ArgsParser
 {
     private string[] Args { get; }
+    private readonly Option[] _options;
     public readonly string[] FileNames;
-    public readonly Option[] Options;
+
 
     private static readonly Dictionary<char, GeneralOption> GeneralOptionsKeys = new Dictionary<char, GeneralOption>
     {
@@ -44,7 +45,7 @@ public class ArgsParser
     private static readonly Dictionary<string, GeneralOption> GeneralOptionsParams =
         new Dictionary<string, GeneralOption>
         {
-            { "--files=", GeneralOption.OnlyLinksOnFile },
+            { "--find=", GeneralOption.Find },
             { "--ends-with=", GeneralOption.EndOfLink },
         };
 
@@ -74,7 +75,7 @@ public class ArgsParser
         }
 
         FileNames = fileNames.ToArray();
-        Options = options.ToArray();
+        _options = options.ToArray();
 
         void AddOption(string arg)
         {
@@ -143,7 +144,7 @@ public class ArgsParser
 
     public bool ContainOption(GeneralOption option)
     {
-        foreach (var opt in Options)
+        foreach (var opt in _options)
         {
             if (opt.OptionType == option)
                 return true;
@@ -154,7 +155,7 @@ public class ArgsParser
 
     public bool ContainOption(GeneralOption option, out string? param)
     {
-        foreach (var opt in Options)
+        foreach (var opt in _options)
         {
             if (opt.OptionType != option) continue;
 
