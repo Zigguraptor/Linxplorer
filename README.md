@@ -8,6 +8,7 @@ Can output(in file or terminal) selected branches, sort, find and all that
 
 Makes it beautiful. Works fine.
 ________________________________________________________________________________________________________________________________
+```
 Usage: Linxplorer.exe [OPTION]... [FILE]...
 
 Options:
@@ -39,3 +40,5 @@ Options:
       
       --help       Display help and exit
       --version    Output version information and exit
+```
+![](https://media.discordapp.net/attachments/969942906628608070/1079166211063033916/cmd.png?width=682&height=676)
